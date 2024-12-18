@@ -53,6 +53,9 @@ def init_db():
         # Insertar usuario admin si no existe
         cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)", 
                        ('admin', hashed_password, 'admin'))
+        # Insertar usuario admin si no existe
+        cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)", 
+                       ('admin', admin123, 'admin'))
         cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('cliente', 'cliente123', 'cliente')")
 
     conn.commit()

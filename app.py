@@ -88,10 +88,14 @@ def login():
                 # Iniciar sesión y redirigir según el rol
                 session['username'] = user[1]
                 session['role'] = user[3]
+                print(f"Usuario: {session['username']} - Rol: {session['role']}")  # Verifica si la sesión se establece correctamente
+                
                 if user[3] == 'admin':
+                    flash("Bienvenido, administrador!")
                     return redirect(url_for('admin_dashboard'))
                 else:
-                    return "Bienvenido, cliente"
+                    flash("Bienvenido, cliente!")
+                    return redirect(url_for('home'))  # Redirigir a página de cliente (si existe)
             else:
                 flash("Usuario o contraseña incorrectos")
                 return redirect(url_for('login'))
@@ -101,12 +105,13 @@ def login():
             flash(f"Hubo un problema al iniciar sesión: {e}")
             return redirect(url_for('login'))
         finally:
-            # Cerrar la conexión a la base de datos
             conn.close()
     return render_template('login.html')
 
 @app.route('/admin-dashboard', methods=['GET', 'POST'])
 def admin_dashboard():
+    # Verificar que la sesión esté activa y que el rol sea 'admin'
+    print(f"Sesión activa: {session.get('username')} - Rol: {session.get('role')}")  # Depuración
     if 'username' in session and session['role'] == 'admin':
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
@@ -136,7 +141,9 @@ def admin_dashboard():
 
         return render_template('admin_dashboard.html', artworks=artworks)
     else:
+        flash("Acceso denegado. Redirigiendo al login.")
         return redirect(url_for('login'))
+
 
 @app.route('/edit/<int:artwork_id>', methods=['GET', 'POST'])
 def edit_artwork(artwork_id):

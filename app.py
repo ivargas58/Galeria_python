@@ -78,19 +78,31 @@ def login():
         password = request.form['password']
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-        user = cursor.fetchone()
-        conn.close()
-        if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
-            session['username'] = user[1]
-            session['role'] = user[3]
-            if user[3] == 'admin':
-                return redirect(url_for('admin_dashboard'))
+
+        try:
+            # Buscar al usuario en la base de datos
+            cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+            user = cursor.fetchone()
+
+            if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
+                # Iniciar sesión y redirigir según el rol
+                session['username'] = user[1]
+                session['role'] = user[3]
+                if user[3] == 'admin':
+                    return redirect(url_for('admin_dashboard'))
+                else:
+                    return "Bienvenido, cliente"
             else:
-                return "Bienvenido, cliente"
-        else:
-            return "Usuario o contraseña incorrectos"
+                return "Usuario o contraseña incorrectos"
+        except Exception as e:
+            # Manejo de excepciones, imprime el error para depuración
+            print(f"Error: {e}")
+            return "Hubo un problema al iniciar sesión."
+        finally:
+            # Cerrar la conexión a la base de datos
+            conn.close()
     return render_template('login.html')
+
 
 @app.route('/admin-dashboard', methods=['GET', 'POST'])
 def admin_dashboard():

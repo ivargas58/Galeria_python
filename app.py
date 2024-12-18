@@ -92,7 +92,9 @@ def login():
 
             if user:
                 print(f"Usuario encontrado: {user}")  # Verifica si el usuario fue encontrado
-                if bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
+                stored_password = user[2]
+                # Validar contraseñas encriptadas y en texto plano para pruebas
+                if stored_password == password or bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
                     session['username'] = user[1]
                     session['role'] = user[3]
                     print(f"Sesión iniciada. Usuario: {session['username']}, Rol: {session['role']}")
@@ -112,8 +114,9 @@ def login():
             return redirect(url_for('login'))
         finally:
             conn.close()
-    
+
     return render_template('login.html')
+
 
 @app.route('/admin-dashboard', methods=['GET', 'POST'])
 def admin_dashboard():

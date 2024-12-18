@@ -77,6 +77,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         print(f"Usuario ingresado: {username}")  # Verifica si el nombre de usuario es correcto
+        
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
 
@@ -106,10 +107,43 @@ def login():
             return redirect(url_for('login'))
         finally:
             conn.close()
-    
+
     return render_template('login.html')
 
+@app.route('/admin-dashboard', methods=['GET', 'POST'])
+def admin_dashboard():
+    print(f"Sesión activa: {session.get('username')} - Rol: {session.get('role')}")  # Depuración
+    if 'username' in session and session['role'] == 'admin':
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
 
+        if request.method == 'POST':
+            # Agregar obra de arte
+            title = request.form['title']
+            description = request.form['description']
+            creation_date = request.form['creation_date']
+            image = request.files['image']
+
+            if image:
+                filename = secure_filename(image.filename)
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                image.save(filepath)
+
+                cursor.execute(''' 
+                    INSERT INTO artworks (title, image, description, creation_date)
+                    VALUES (?, ?, ?, ?)
+                ''', (title, filename, description, creation_date))
+                conn.commit()
+                flash('Obra de arte agregada exitosamente.')
+
+        cursor.execute('SELECT * FROM artworks')
+        artworks = cursor.fetchall()
+        conn.close()
+
+        return render_template('admin_dashboard.html', artworks=artworks)
+    else:
+        flash("Acceso denegado. Redirigiendo al login.")
+        return redirect(url_for('login'))
 
 @app.route('/edit/<int:artwork_id>', methods=['GET', 'POST'])
 def edit_artwork(artwork_id):
@@ -150,40 +184,6 @@ def edit_artwork(artwork_id):
         return render_template('edit_artwork.html', artwork=artwork)
 
     return redirect(url_for('login'))
-@app.route('/admin-dashboard', methods=['GET', 'POST'])
-def admin_dashboard():
-    print(f"Sesión activa: {session.get('username')} - Rol: {session.get('role')}")  # Depuración
-    if 'username' in session and session['role'] == 'admin':
-        conn = sqlite3.connect('database.db')
-        cursor = conn.cursor()
-
-        if request.method == 'POST':
-            # Agregar obra de arte
-            title = request.form['title']
-            description = request.form['description']
-            creation_date = request.form['creation_date']
-            image = request.files['image']
-
-            if image:
-                filename = secure_filename(image.filename)
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                image.save(filepath)
-
-                cursor.execute(''' 
-                    INSERT INTO artworks (title, image, description, creation_date)
-                    VALUES (?, ?, ?, ?)
-                ''', (title, filename, description, creation_date))
-                conn.commit()
-                flash('Obra de arte agregada exitosamente.')
-
-        cursor.execute('SELECT * FROM artworks')
-        artworks = cursor.fetchall()
-        conn.close()
-
-        return render_template('admin_dashboard.html', artworks=artworks)
-    else:
-        flash("Acceso denegado. Redirigiendo al login.")
-        return redirect(url_for('login'))
 
 @app.route('/delete/<int:artwork_id>', methods=['POST'])
 def delete_artwork(artwork_id):

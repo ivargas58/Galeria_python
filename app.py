@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import sqlite3
 import os
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
+import os
+import bcrypt
 
 app = Flask(__name__)
 app.secret_key = 'secret_key'
@@ -35,9 +38,14 @@ def init_db():
             creation_date TEXT NOT NULL
         )
     ''')
+    
+    password = os.getenv('ADMIN_PASSWORD')
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
-    # Usuarios predefinidos
-    cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')")
+    # Guardar la contraseña encriptada en la base de datos
+    cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)", 
+               ('admin', hashed_password, 'admin'))
+
     cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('cliente', 'cliente123', 'cliente')")
 
     conn.commit()

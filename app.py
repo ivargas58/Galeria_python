@@ -3,8 +3,10 @@ import sqlite3
 import os
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
-import os
 import bcrypt
+
+# Cargar las variables de entorno del archivo .env
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = 'secret_key'
@@ -19,7 +21,7 @@ def init_db():
     cursor = conn.cursor()
 
     # Tabla de usuarios
-    cursor.execute('''
+    cursor.execute(''' 
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE,
@@ -29,7 +31,7 @@ def init_db():
     ''')
 
     # Tabla de obras de arte
-    cursor.execute('''
+    cursor.execute(''' 
         CREATE TABLE IF NOT EXISTS artworks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
@@ -39,14 +41,16 @@ def init_db():
         )
     ''')
     
+    # Leer la contraseña del archivo .env
     password = os.getenv('ADMIN_PASSWORD')
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
-    # Guardar la contraseña encriptada en la base de datos
-    cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)", 
-               ('admin', hashed_password, 'admin'))
-
-    cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('cliente', 'cliente123', 'cliente')")
+    if password:
+        # Encriptar la contraseña
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        
+        # Insertar usuario admin si no existe
+        cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)", 
+                       ('admin', hashed_password, 'admin'))
+        cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('cliente', 'cliente123', 'cliente')")
 
     conn.commit()
     conn.close()
@@ -74,10 +78,10 @@ def login():
         password = request.form['password']
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
+        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
         user = cursor.fetchone()
         conn.close()
-        if user:
+        if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
             session['username'] = user[1]
             session['role'] = user[3]
             if user[3] == 'admin':
@@ -106,7 +110,7 @@ def admin_dashboard():
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 image.save(filepath)
 
-                cursor.execute('''
+                cursor.execute(''' 
                     INSERT INTO artworks (title, image, description, creation_date)
                     VALUES (?, ?, ?, ?)
                 ''', (title, filename, description, creation_date))
@@ -137,13 +141,13 @@ def edit_artwork(artwork_id):
                 filename = secure_filename(image.filename)
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 image.save(filepath)
-                cursor.execute('''
+                cursor.execute(''' 
                     UPDATE artworks
                     SET title = ?, image = ?, description = ?, creation_date = ?
                     WHERE id = ?
                 ''', (title, filename, description, creation_date, artwork_id))
             else:
-                cursor.execute('''
+                cursor.execute(''' 
                     UPDATE artworks
                     SET title = ?, description = ?, creation_date = ?
                     WHERE id = ?
@@ -183,4 +187,5 @@ def logout():
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
+    init_db()
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8000)))

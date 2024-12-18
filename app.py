@@ -76,73 +76,39 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        print(f"Usuario ingresado: {username}")  # Verifica si el nombre de usuario es correcto
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
 
         try:
-            # Buscar al usuario en la base de datos
             cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
             user = cursor.fetchone()
 
-            if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
-                # Iniciar sesión y redirigir según el rol
-                session['username'] = user[1]
-                session['role'] = user[3]
-                print(f"Usuario: {session['username']} - Rol: {session['role']}")  # Verifica si la sesión se establece correctamente
-                
-                if user[3] == 'admin':
-                    flash("Bienvenido, administrador!")
-                    return redirect(url_for('admin_dashboard'))
+            if user:
+                print(f"Usuario encontrado: {user}")  # Verifica si el usuario fue encontrado
+                if bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
+                    session['username'] = user[1]
+                    session['role'] = user[3]
+                    print(f"Sesión iniciada. Usuario: {session['username']}, Rol: {session['role']}")
+                    if user[3] == 'admin':
+                        flash("Bienvenido, administrador!")
+                        return redirect(url_for('admin_dashboard'))
+                    else:
+                        flash("Bienvenido, cliente!")
+                        return redirect(url_for('home'))
                 else:
-                    flash("Bienvenido, cliente!")
-                    return redirect(url_for('home'))  # Redirigir a página de cliente (si existe)
+                    flash("Contraseña incorrecta.")
             else:
-                flash("Usuario o contraseña incorrectos")
-                return redirect(url_for('login'))
+                flash("Usuario no encontrado.")
+            return redirect(url_for('login'))
         except Exception as e:
-            # Manejo de excepciones
-            print(f"Error: {e}")
             flash(f"Hubo un problema al iniciar sesión: {e}")
             return redirect(url_for('login'))
         finally:
             conn.close()
+    
     return render_template('login.html')
 
-@app.route('/admin-dashboard', methods=['GET', 'POST'])
-def admin_dashboard():
-    # Verificar que la sesión esté activa y que el rol sea 'admin'
-    print(f"Sesión activa: {session.get('username')} - Rol: {session.get('role')}")  # Depuración
-    if 'username' in session and session['role'] == 'admin':
-        conn = sqlite3.connect('database.db')
-        cursor = conn.cursor()
-
-        if request.method == 'POST':
-            # Agregar obra de arte
-            title = request.form['title']
-            description = request.form['description']
-            creation_date = request.form['creation_date']
-            image = request.files['image']
-
-            if image:
-                filename = secure_filename(image.filename)
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                image.save(filepath)
-
-                cursor.execute(''' 
-                    INSERT INTO artworks (title, image, description, creation_date)
-                    VALUES (?, ?, ?, ?)
-                ''', (title, filename, description, creation_date))
-                conn.commit()
-                flash('Obra de arte agregada exitosamente.')
-
-        cursor.execute('SELECT * FROM artworks')
-        artworks = cursor.fetchall()
-        conn.close()
-
-        return render_template('admin_dashboard.html', artworks=artworks)
-    else:
-        flash("Acceso denegado. Redirigiendo al login.")
-        return redirect(url_for('login'))
 
 
 @app.route('/edit/<int:artwork_id>', methods=['GET', 'POST'])

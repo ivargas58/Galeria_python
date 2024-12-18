@@ -9,7 +9,7 @@ import bcrypt
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = 'secret_key'
+app.secret_key = os.urandom(24)  # Se recomienda una clave más segura para la sesión
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -93,16 +93,17 @@ def login():
                 else:
                     return "Bienvenido, cliente"
             else:
-                return "Usuario o contraseña incorrectos"
+                flash("Usuario o contraseña incorrectos")
+                return redirect(url_for('login'))
         except Exception as e:
-            # Manejo de excepciones, imprime el error para depuración
+            # Manejo de excepciones
             print(f"Error: {e}")
-            return "Hubo un problema al iniciar sesión."
+            flash(f"Hubo un problema al iniciar sesión: {e}")
+            return redirect(url_for('login'))
         finally:
             # Cerrar la conexión a la base de datos
             conn.close()
     return render_template('login.html')
-
 
 @app.route('/admin-dashboard', methods=['GET', 'POST'])
 def admin_dashboard():
@@ -200,4 +201,4 @@ def logout():
 
 if __name__ == '__main__':
     init_db()
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8000)))
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8000)), debug=True)

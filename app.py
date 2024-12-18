@@ -1,6 +1,6 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
 import sqlite3
-import os
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import bcrypt
@@ -8,10 +8,11 @@ import bcrypt
 # Cargar las variables de entorno del archivo .env
 load_dotenv()
 
-print(f"ADMIN_PASSWORD: {os.getenv('ADMIN_PASSWORD')}")
-
+# Crear la aplicación Flask
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # Se recomienda una clave más segura para la sesión
+
+# Clave secreta de la sesión de Flask
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "una_clave_secreta_aqui")  # Clave por defecto si no está definida
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -42,7 +43,7 @@ def init_db():
             creation_date TEXT NOT NULL
         )
     ''')
-    
+
     # Leer la contraseña del archivo .env
     password = os.getenv('ADMIN_PASSWORD')
     if password:
@@ -79,7 +80,6 @@ def login():
         username = request.form['username']
         password = request.form['password']
         print(f"Usuario ingresado: {username}")  # Verifica si el nombre de usuario es correcto
-        
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
 
@@ -109,7 +109,7 @@ def login():
             return redirect(url_for('login'))
         finally:
             conn.close()
-
+    
     return render_template('login.html')
 
 @app.route('/admin-dashboard', methods=['GET', 'POST'])
@@ -146,6 +146,7 @@ def admin_dashboard():
     else:
         flash("Acceso denegado. Redirigiendo al login.")
         return redirect(url_for('login'))
+
 
 @app.route('/edit/<int:artwork_id>', methods=['GET', 'POST'])
 def edit_artwork(artwork_id):

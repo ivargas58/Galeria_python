@@ -8,6 +8,8 @@ import bcrypt
 # Cargar las variables de entorno del archivo .env
 load_dotenv()
 
+print(f"ADMIN_PASSWORD: {os.getenv('ADMIN_PASSWORD')}")
+
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Se recomienda una clave más segura para la sesión
 

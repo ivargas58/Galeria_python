@@ -12,14 +12,17 @@ load_dotenv()
 app = Flask(__name__)
 
 # Clave secreta de la sesión de Flask
-app.secret_key = os.environ.get("FLASK_SECRET_KEY")  # Clave por defecto si no está definida
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Ruta de la base de datos (usando la carpeta persistente en Railway)
+DATABASE_PATH = os.path.join(os.getcwd(), "data", "database.db")  # Usar '/data/database.db' en Railway
+
 def init_db():
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
     # Crear las tablas si no existen
@@ -54,7 +57,7 @@ def uploaded_file(filename):
 
 @app.route('/')
 def home():
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
     # Recuperar todas las obras de la base de datos
@@ -69,9 +72,8 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        print(f"Usuario ingresado: {username}")  # Verifica si el nombre de usuario es correcto
 
-        conn = sqlite3.connect('database.db')
+        conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
 
         try:
@@ -79,15 +81,11 @@ def login():
             user = cursor.fetchone()
 
             if user:
-                print(f"Usuario encontrado: {user}")  # Verifica si el usuario fue encontrado
                 stored_password = user[2]  # Obtiene la contraseña almacenada en la base de datos
-                print(f"Contraseña almacenada: {stored_password}")
 
-                # Validar contraseñas encriptadas y en texto plano para pruebas
                 if bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
                     session['username'] = user[1]
                     session['role'] = user[3]
-                    print(f"Sesión iniciada. Usuario: {session['username']}, Rol: {session['role']}")
 
                     if user[3] == 'admin':
                         flash("Bienvenido, administrador!")
@@ -110,9 +108,8 @@ def login():
 
 @app.route('/admin-dashboard', methods=['GET', 'POST'])
 def admin_dashboard():
-    print(f"Sesión activa: {session.get('username')} - Rol: {session.get('role')}")  # Depuración
     if 'username' in session and session['role'] == 'admin':
-        conn = sqlite3.connect('database.db')
+        conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
 
         if request.method == 'POST':
@@ -139,6 +136,7 @@ def admin_dashboard():
         conn.close()
 
         return render_template('admin_dashboard.html', artworks=artworks)
+
     else:
         flash("Acceso denegado. Redirigiendo al login.")
         return redirect(url_for('login'))
@@ -146,7 +144,7 @@ def admin_dashboard():
 @app.route('/edit/<int:artwork_id>', methods=['GET', 'POST'])
 def edit_artwork(artwork_id):
     if 'username' in session and session['role'] == 'admin':
-        conn = sqlite3.connect('database.db')
+        conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
 
         if request.method == 'POST':
@@ -186,7 +184,7 @@ def edit_artwork(artwork_id):
 @app.route('/delete/<int:artwork_id>', methods=['POST'])
 def delete_artwork(artwork_id):
     if 'username' in session and session['role'] == 'admin':
-        conn = sqlite3.connect('database.db')
+        conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
 
         # Eliminar la obra de la base de datos

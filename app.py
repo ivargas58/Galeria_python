@@ -18,9 +18,6 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Ruta de la base de datos (usando la carpeta persistente en Railway)
-# Usar '/data/database.db' en Railway
-
 def init_db():
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
@@ -57,7 +54,7 @@ def uploaded_file(filename):
 
 @app.route('/')
 def home():
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
 
     # Recuperar todas las obras de la base de datos
@@ -73,7 +70,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = sqlite3.connect("database.db")
         cursor = conn.cursor()
 
         try:
@@ -109,7 +106,7 @@ def login():
 @app.route('/admin-dashboard', methods=['GET', 'POST'])
 def admin_dashboard():
     if 'username' in session and session['role'] == 'admin':
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = sqlite3.connect("database.db")
         cursor = conn.cursor()
 
         if request.method == 'POST':
@@ -144,7 +141,7 @@ def admin_dashboard():
 @app.route('/edit/<int:artwork_id>', methods=['GET', 'POST'])
 def edit_artwork(artwork_id):
     if 'username' in session and session['role'] == 'admin':
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = sqlite3.connect("database.db")
         cursor = conn.cursor()
 
         if request.method == 'POST':
@@ -184,7 +181,7 @@ def edit_artwork(artwork_id):
 @app.route('/delete/<int:artwork_id>', methods=['POST'])
 def delete_artwork(artwork_id):
     if 'username' in session and session['role'] == 'admin':
-        conn = sqlite3.connect(DATABASE_PATH)
+        conn = sqlite3.connect("database.db")
         cursor = conn.cursor()
 
         # Eliminar la obra de la base de datos

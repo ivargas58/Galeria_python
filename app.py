@@ -22,7 +22,7 @@ def init_db():
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
 
-    # Tabla de usuarios
+    # Crear las tablas si no existen
     cursor.execute(''' 
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,7 +32,6 @@ def init_db():
         )
     ''')
 
-    # Tabla de obras de arte
     cursor.execute(''' 
         CREATE TABLE IF NOT EXISTS artworks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,23 +42,12 @@ def init_db():
         )
     ''')
 
-    # Leer la contraseña del archivo .env
-    password = os.getenv('ADMIN_PASSWORD')
-    if password:
-        # Encriptar la contraseña
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        
-        # Insertar usuario admin si no existe (con la contraseña encriptada)
-        cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)", 
-                       ('admin', hashed_password, 'admin'))
-
+    # Agregar un usuario admin si no existe
+    cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)", 
+                   ('admin', 'admin123', 'admin'))
     conn.commit()
     conn.close()
 
-'''# Insertar usuario admin con contraseña en texto plano
-    cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)", 
-                   ('admin', 'admin123', 'admin'))
-'''
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)

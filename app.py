@@ -12,7 +12,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # Clave secreta de la sesión de Flask
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "una_clave_secreta_aqui")  # Clave por defecto si no está definida
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "y5f3$2s@29h4#19j0#&13b7u9p!q8d@fj3$^u1d5")  # Clave por defecto si no está definida
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -82,6 +82,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         print(f"Usuario ingresado: {username}")  # Verifica si el nombre de usuario es correcto
+
         conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
 
@@ -91,12 +92,15 @@ def login():
 
             if user:
                 print(f"Usuario encontrado: {user}")  # Verifica si el usuario fue encontrado
-                stored_password = user[2]
+                stored_password = user[2]  # Obtiene la contraseña almacenada en la base de datos
+                print(f"Contraseña almacenada: {stored_password}")
+
                 # Validar contraseñas encriptadas y en texto plano para pruebas
-                if stored_password == password or bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
+                if bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
                     session['username'] = user[1]
                     session['role'] = user[3]
                     print(f"Sesión iniciada. Usuario: {session['username']}, Rol: {session['role']}")
+
                     if user[3] == 'admin':
                         flash("Bienvenido, administrador!")
                         return redirect(url_for('admin_dashboard'))
@@ -115,6 +119,7 @@ def login():
             conn.close()
 
     return render_template('login.html')
+
 
 
 @app.route('/admin-dashboard', methods=['GET', 'POST'])

@@ -19,10 +19,10 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Ruta de la base de datos (usando la carpeta persistente en Railway)
-DATABASE_PATH = os.path.join(os.getcwd(), "data", "database.db")  # Usar '/data/database.db' en Railway
+# Usar '/data/database.db' en Railway
 
 def init_db():
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
 
     # Crear las tablas si no existen

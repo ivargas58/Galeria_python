@@ -12,7 +12,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # Clave secreta de la sesión de Flask
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "y5f3$2s@29h4#19j0#&13b7u9p!q8d@fj3$^u1d5")  # Clave por defecto si no está definida
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")  # Clave por defecto si no está definida
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -108,8 +108,6 @@ def login():
 
     return render_template('login.html')
 
-
-
 @app.route('/admin-dashboard', methods=['GET', 'POST'])
 def admin_dashboard():
     print(f"Sesión activa: {session.get('username')} - Rol: {session.get('role')}")  # Depuración
@@ -144,7 +142,6 @@ def admin_dashboard():
     else:
         flash("Acceso denegado. Redirigiendo al login.")
         return redirect(url_for('login'))
-
 
 @app.route('/edit/<int:artwork_id>', methods=['GET', 'POST'])
 def edit_artwork(artwork_id):
@@ -202,11 +199,6 @@ def delete_artwork(artwork_id):
 
     return redirect(url_for('login'))
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('home'))
-
 if __name__ == '__main__':
     init_db()
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8000)), debug=True)
+    app.run(debug=True)

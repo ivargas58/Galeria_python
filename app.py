@@ -18,7 +18,6 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Crear la base de datos y las tablas
 def init_db():
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
@@ -50,17 +49,17 @@ def init_db():
         # Encriptar la contraseña
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         
-        # Insertar usuario admin si no existe
+        # Insertar usuario admin si no existe (con la contraseña encriptada)
         cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)", 
                        ('admin', hashed_password, 'admin'))
-        cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES ('cliente', 'cliente123', 'cliente')")
-# Insertar usuario admin con contraseña en texto plano
-    cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)", 
-                   ('admin', 'admin123', 'admin'))
 
     conn.commit()
     conn.close()
 
+'''# Insertar usuario admin con contraseña en texto plano
+    cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)", 
+                   ('admin', 'admin123', 'admin'))
+'''
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)

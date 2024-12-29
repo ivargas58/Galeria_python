@@ -12,7 +12,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # Clave secreta de la sesión de Flask
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "una_clave_secreta_aqui")  # Clave por defecto si no está definida
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")  # Clave por defecto si no está definida
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER

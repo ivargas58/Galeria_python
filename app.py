@@ -7,7 +7,7 @@ import bcrypt
 
 # Cargar las variables de entorno del archivo .env
 load_dotenv()
-
+#
 # Crear la aplicación Flask
 app = Flask(__name__)
 

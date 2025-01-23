@@ -23,6 +23,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 DB_PATH = './database.db'
 
 # Crear la base de datos y las tablas
+# Crear la base de datos y las tablas
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -49,11 +50,8 @@ def init_db():
     ''')
 
     # Crear usuario administrador si no existe
-    password = os.getenv('ADMIN_PASSWORD', 'admin123')
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
     cursor.execute("INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)", 
-                   ('admin', hashed_password.decode('utf-8'), 'admin'))
+                   ('admin', 'admin123', 'admin'))
     conn.commit()
     conn.close()
 

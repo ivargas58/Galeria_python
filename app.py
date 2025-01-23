@@ -3,7 +3,6 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import sqlite3
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
-import bcrypt
 
 # Cargar las variables de entorno del archivo .env
 load_dotenv()
@@ -22,7 +21,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # Ruta de la base de datos
 DB_PATH = './database.db'
 
-# Crear la base de datos y las tablas
 # Crear la base de datos y las tablas
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -57,10 +55,12 @@ def init_db():
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
+    """Devuelve el archivo desde el directorio de subidas."""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/')
 def home():
+    """Página de inicio que muestra las obras de arte."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM artworks')
@@ -70,6 +70,7 @@ def home():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """Ruta para iniciar sesión."""
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -80,7 +81,7 @@ def login():
         user = cursor.fetchone()
         conn.close()
 
-        if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
+        if user and password == user[2]:  # Comparar contraseñas en texto plano
             session['username'] = user[1]
             session['role'] = user[3]
             if user[3] == 'admin':
@@ -92,6 +93,7 @@ def login():
 
 @app.route('/admin-dashboard', methods=['GET', 'POST'])
 def admin_dashboard():
+    """Ruta para el dashboard del administrador."""
     if 'username' in session and session['role'] == 'admin':
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
@@ -122,6 +124,7 @@ def admin_dashboard():
 
 @app.route('/logout')
 def logout():
+    """Cierra la sesión actual."""
     session.clear()
     return redirect(url_for('home'))
 
